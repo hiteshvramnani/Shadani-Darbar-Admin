@@ -567,10 +567,15 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
               style={{
                 color: "#3d2000",
                 fontSize: "0.65rem",
-                marginTop: "4px",
+                marginTop: "6px",
+                lineHeight: 1.8,
               }}
             >
               JPG, PNG, WEBP · Max 10MB each
+              <br />
+              <span style={{ color: "#5a3a1a" }}>
+                Recommended: Landscape · Min 800×600px · 4:3 or 16:9 ratio
+              </span>
             </div>
           </div>
           <input
