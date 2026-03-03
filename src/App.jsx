@@ -6,8 +6,8 @@ import {
 } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import NoticeAdmin from "./NoticeAdmin";
+import LocationsAdmin from "./Locationsadmin";
 import EventsAdmin from "./EventsAdmin";
-import LocationsAdmin from "./LocationsAdmin";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL;
