@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-
-const WORKER_URL = import.meta.env.VITE_WORKER_URL;
-const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
-const BUCKET = "media";
+import { fetchConfig, saveConfig } from "../../lib/api";
+import { uploadToSupabase } from "../../lib/supabase";
+import { Card, CardHeader, CardBody } from "../../components/Card";
+import Feedback from "../../components/Feedback";
 
 const BLANK_LOCATION = {
   id: "",
@@ -17,45 +15,18 @@ const BLANK_LOCATION = {
 };
 const EMOJI_OPTIONS = ["🛕", "🕉️", "🪔", "🏛️", "🕌", "🙏", "⛪", "🗺️", "✨"];
 
-/* ── Upload image to Supabase R2 ─────────────────────────────────── */
-async function uploadToSupabase(file, locationId) {
-  const ext = file.name.split(".").pop();
-  const filename = `locations/${locationId}/${Date.now()}.${ext}`;
-
-  // First check if we can reach Supabase storage
-  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${filename}`;
-  console.log("Uploading to:", uploadUrl);
-  console.log("Key starts with:", SUPABASE_KEY?.substring(0, 20));
-
-  const res = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": file.type,
-      "x-upsert": "true",
-      apikey: SUPABASE_KEY,
-    },
-    body: file,
-  });
-  const text = await res.text();
-  console.log("Supabase response:", res.status, text);
-  if (!res.ok) {
-    let msg = `Upload failed (${res.status})`;
-    try {
-      msg = JSON.parse(text).message || msg;
-    } catch {}
-    throw new Error(msg);
-  }
-  return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${filename}`;
+async function uploadLocationImage(file, locationId) {
+  return await uploadToSupabase(file, `locations/${locationId}`);
 }
 
-/* ── Delete image from Supabase ─────────────────────────────────── */
-async function deleteFromSupabase(url) {
-  const path = url.split(`/object/public/${BUCKET}/`)[1];
+async function deleteLocationImage(url) {
+  const base = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_KEY;
+  const path = url.split("/object/public/media/")[1];
   if (!path) return;
-  await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, {
+  await fetch(`${base}/storage/v1/object/media/${path}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${SUPABASE_KEY}` },
+    headers: { Authorization: `Bearer ${key}` },
   });
 }
 
@@ -77,11 +48,10 @@ export default function LocationsAdmin() {
   const [editing, setEditing] = useState(null);
 
   useEffect(() => {
-    fetch(`${WORKER_URL}/api/config`)
-      .then((r) => r.json())
-      .then((data) => {
-        setConfig(data.config || {});
-        setLocations(data.config?.locations || []);
+    fetchConfig()
+      .then((cfg) => {
+        setConfig(cfg || {});
+        setLocations(cfg?.locations || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -92,16 +62,7 @@ export default function LocationsAdmin() {
     setFeedback(null);
     try {
       const newConfig = { ...config, locations: newLocations };
-      const res = await fetch(`${WORKER_URL}/api/admin/config`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${ADMIN_SECRET}`,
-        },
-        body: JSON.stringify(newConfig),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save");
+      await saveConfig(newConfig);
       setConfig(newConfig);
       setLocations(newLocations);
       setFeedback({ ok: true, msg: "✦ Locations updated successfully!" });
@@ -132,7 +93,7 @@ export default function LocationsAdmin() {
         style={{
           textAlign: "center",
           padding: "60px",
-          color: "#5a3a1a",
+          color: "var(--text-soft)",
           fontFamily: "'Cinzel', serif",
           fontSize: "0.8rem",
           letterSpacing: "2px",
@@ -151,14 +112,14 @@ export default function LocationsAdmin() {
               style={{
                 fontFamily: "'Cinzel', serif",
                 fontSize: "0.85rem",
-                color: "#faf5e8",
+                color: "var(--text-dark)",
                 fontWeight: 600,
                 marginBottom: "2px",
               }}
             >
               All Locations
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#5a3a1a" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-soft)" }}>
               {locations.length} location{locations.length !== 1 ? "s" : ""}{" "}
               listed
             </div>
@@ -170,7 +131,7 @@ export default function LocationsAdmin() {
               style={{
                 textAlign: "center",
                 padding: "20px 0",
-                color: "#3d2000",
+                color: "var(--border)",
                 fontSize: "0.82rem",
                 fontFamily: "'Cinzel', serif",
               }}
@@ -182,14 +143,14 @@ export default function LocationsAdmin() {
             <div
               key={loc.id || i}
               style={{
-                background: "#110800",
+                background: "var(--off-white)",
                 borderRadius: "10px",
                 padding: "14px 16px",
                 marginBottom: "10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                border: "1px solid #2a1000",
+                border: "1px solid var(--border)",
                 gap: "12px",
               }}
             >
@@ -216,7 +177,7 @@ export default function LocationsAdmin() {
                             height: "36px",
                             borderRadius: "6px",
                             objectFit: "cover",
-                            border: "1px solid #3d2000",
+                            border: "1px solid var(--border)",
                           }}
                         />
                       ))}
@@ -226,12 +187,12 @@ export default function LocationsAdmin() {
                             width: "36px",
                             height: "36px",
                             borderRadius: "6px",
-                            background: "#2a1000",
-                            border: "1px solid #3d2000",
+                            background: "var(--cream)",
+                            border: "1px solid var(--border)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            color: "#5a3a1a",
+                            color: "var(--text-soft)",
                             fontSize: "0.65rem",
                           }}
                         >
@@ -246,7 +207,7 @@ export default function LocationsAdmin() {
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      color: "#faf5e8",
+                      color: "var(--text-dark)",
                       fontSize: "0.88rem",
                       fontWeight: 700,
                       fontFamily: "'Cinzel', serif",
@@ -256,7 +217,7 @@ export default function LocationsAdmin() {
                   </div>
                   <div
                     style={{
-                      color: "#5a3a1a",
+                      color: "var(--text-soft)",
                       fontSize: "0.72rem",
                       marginTop: "2px",
                     }}
@@ -265,7 +226,7 @@ export default function LocationsAdmin() {
                   </div>
                   <div
                     style={{
-                      color: "#3d2000",
+                      color: "var(--border)",
                       fontSize: "0.68rem",
                       marginTop: "2px",
                       whiteSpace: "nowrap",
@@ -319,7 +280,7 @@ export default function LocationsAdmin() {
               borderRadius: "8px",
               border: "1px dashed #3d2000",
               background: "transparent",
-              color: "#5a3a1a",
+              color: "var(--text-soft)",
               fontSize: "0.78rem",
               cursor: "pointer",
               fontFamily: "'Cinzel', serif",
@@ -328,12 +289,12 @@ export default function LocationsAdmin() {
               marginTop: "4px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#d4570a";
+              e.currentTarget.style.borderColor = "var(--saffron)";
               e.currentTarget.style.color = "#d4570a";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "#3d2000";
-              e.currentTarget.style.color = "#5a3a1a";
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text-soft)";
             }}
           >
             + Add Location
@@ -387,7 +348,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
           setUploadMsg({ ok: false, msg: `${file.name} exceeds 10MB limit` });
           continue;
         }
-        const url = await uploadToSupabase(file, locId);
+        const url = await uploadLocationImage(file, locId);
         uploaded.push(url);
       }
       if (uploaded.length > 0) {
@@ -406,7 +367,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
 
   const removeImage = async (idx) => {
     const url = loc.images[idx];
-    await deleteFromSupabase(url);
+    await deleteLocationImage(url);
     setLoc((l) => ({ ...l, images: l.images.filter((_, i) => i !== idx) }));
   };
 
@@ -432,7 +393,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
           background: "linear-gradient(160deg, #1e0a00 0%, #150600 100%)",
           borderRadius: "16px",
           padding: "32px",
-          border: "1px solid #3d2000",
+          border: "1px solid var(--border)",
           width: "90%",
           maxWidth: "560px",
           maxHeight: "90vh",
@@ -456,7 +417,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
         <h3
           style={{
             fontFamily: "'Cinzel', serif",
-            color: "#faf5e8",
+            color: "var(--text-dark)",
             margin: "0 0 24px",
             fontSize: "1rem",
             letterSpacing: "1px",
@@ -479,7 +440,9 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
                   borderRadius: "8px",
                   border: "none",
                   background:
-                    loc.emoji === em ? "rgba(212,87,10,0.3)" : "#110800",
+                    loc.emoji === em
+                      ? "rgba(212,87,10,0.3)"
+                      : "var(--off-white)",
                   outline:
                     loc.emoji === em
                       ? "2px solid #d4570a"
@@ -544,7 +507,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
             onDragOver={(e) => e.preventDefault()}
             onClick={() => fileRef.current.click()}
             style={{
-              border: "2px dashed #3d2000",
+              border: "2px dashed var(--border)",
               borderRadius: "10px",
               padding: "20px",
               textAlign: "center",
@@ -553,19 +516,19 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
               background: uploading ? "rgba(212,87,10,0.05)" : "transparent",
             }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.borderColor = "#d4570a")
+              (e.currentTarget.style.borderColor = "var(--saffron)")
             }
             onMouseLeave={(e) =>
-              (e.currentTarget.style.borderColor = "#3d2000")
+              (e.currentTarget.style.borderColor = "var(--border)")
             }
           >
             <div style={{ fontSize: "1.5rem", marginBottom: "6px" }}>📸</div>
-            <div style={{ color: "#5a3a1a", fontSize: "0.78rem" }}>
+            <div style={{ color: "var(--text-soft)", fontSize: "0.78rem" }}>
               {uploading ? "Uploading..." : "Click or drag images here"}
             </div>
             <div
               style={{
-                color: "#3d2000",
+                color: "var(--border)",
                 fontSize: "0.65rem",
                 marginTop: "6px",
                 lineHeight: 1.8,
@@ -573,7 +536,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
             >
               JPG, PNG, WEBP · Max 10MB each
               <br />
-              <span style={{ color: "#5a3a1a" }}>
+              <span style={{ color: "var(--text-soft)" }}>
                 Recommended: Landscape · Min 800×600px · 4:3 or 16:9 ratio
               </span>
             </div>
@@ -623,7 +586,7 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
                       height: "100%",
                       objectFit: "cover",
                       borderRadius: "8px",
-                      border: "1px solid #3d2000",
+                      border: "1px solid var(--border)",
                     }}
                   />
                   <button
@@ -661,9 +624,9 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
               flex: 1,
               padding: "11px",
               borderRadius: "8px",
-              border: "1px solid #3d2000",
+              border: "1px solid var(--border)",
               background: "transparent",
-              color: "#5a3a1a",
+              color: "var(--text-soft)",
               fontSize: "0.82rem",
               cursor: "pointer",
               fontFamily: "'Lato', sans-serif",
