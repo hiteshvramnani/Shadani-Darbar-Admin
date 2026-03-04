@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { fetchConfig, saveConfig } from "../../lib/api";
-import { Card, CardHeader, CardBody } from "../../components/Card";
 import Feedback from "../../components/Feedback";
 
 export default function AccessAdmin({ currentUserEmail }) {
-  const [config, setConfig] = useState(null);
   const [emails, setEmails] = useState([]);
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(true);
@@ -14,12 +12,16 @@ export default function AccessAdmin({ currentUserEmail }) {
   useEffect(() => {
     fetchConfig()
       .then((cfg) => {
-        setConfig(cfg || {});
         setEmails(cfg?.allowedEmails || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const flash = (ok, msg) => {
+    setFeedback({ ok, msg });
+    setTimeout(() => setFeedback(null), 3000);
+  };
 
   const save = async (newEmails) => {
     setSaving(true);
@@ -27,24 +29,21 @@ export default function AccessAdmin({ currentUserEmail }) {
     try {
       await saveConfig({ allowedEmails: newEmails });
       setEmails(newEmails);
-      setFeedback({ ok: true, msg: "❖ Access list updated!" });
+      flash(true, "✦ Access list updated!");
     } catch (e) {
-      setFeedback({ ok: false, msg: "✕ " + e.message });
+      flash(false, "✕ " + e.message);
     }
     setSaving(false);
-    setTimeout(() => setFeedback(null), 4000);
   };
 
   const addEmail = () => {
     const email = newEmail.trim().toLowerCase();
     if (!email || !email.includes("@")) {
-      setFeedback({ ok: false, msg: "✕ Enter a valid email" });
-      setTimeout(() => setFeedback(null), 3000);
+      flash(false, "✕ Enter a valid email");
       return;
     }
     if (emails.includes(email)) {
-      setFeedback({ ok: false, msg: "✕ Email already in list" });
-      setTimeout(() => setFeedback(null), 3000);
+      flash(false, "✕ Email already in list");
       return;
     }
     setNewEmail("");
@@ -53,8 +52,7 @@ export default function AccessAdmin({ currentUserEmail }) {
 
   const removeEmail = (email) => {
     if (email === currentUserEmail) {
-      setFeedback({ ok: false, msg: "✕ You cannot remove your own account" });
-      setTimeout(() => setFeedback(null), 3000);
+      flash(false, "✕ You cannot remove your own account");
       return;
     }
     if (!confirm("Remove " + email + " from admin access?")) return;
@@ -67,8 +65,8 @@ export default function AccessAdmin({ currentUserEmail }) {
         style={{
           textAlign: "center",
           padding: "60px",
-          color: "#5a3a1a",
-          fontFamily: "Cinzel, serif",
+          color: "var(--text-soft)",
+          fontFamily: "'Cinzel', serif",
           fontSize: "0.8rem",
           letterSpacing: "2px",
         }}
@@ -79,27 +77,30 @@ export default function AccessAdmin({ currentUserEmail }) {
 
   return (
     <div style={{ maxWidth: "720px" }}>
+      {/* ── Admin accounts card ── */}
       <div className="card">
         <div className="card-header">
           <div>
             <div
               style={{
-                fontFamily: "Cinzel, serif",
+                fontFamily: "'Cinzel', serif",
                 fontSize: "0.85rem",
-                color: "#faf5e8",
+                color: "var(--text-dark)",
                 fontWeight: 600,
                 marginBottom: "2px",
               }}
             >
               Allowed Admins
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#5a3a1a" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-soft)" }}>
               {emails.length} account{emails.length !== 1 ? "s" : ""} with
               access
             </div>
           </div>
         </div>
+
         <div className="card-body">
+          {/* Add email row */}
           <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
             <input
               value={newEmail}
@@ -112,14 +113,14 @@ export default function AccessAdmin({ currentUserEmail }) {
               onClick={addEmail}
               disabled={saving}
               style={{
-                background: "linear-gradient(135deg, #d4570a, #a83800)",
+                background: "linear-gradient(135deg, var(--saffron), #a83800)",
                 border: "none",
                 color: "white",
                 borderRadius: "8px",
                 padding: "0 20px",
                 fontSize: "0.78rem",
                 cursor: "pointer",
-                fontFamily: "Cinzel, serif",
+                fontFamily: "'Cinzel', serif",
                 letterSpacing: "0.5px",
                 whiteSpace: "nowrap",
               }}
@@ -127,50 +128,58 @@ export default function AccessAdmin({ currentUserEmail }) {
               + Add
             </button>
           </div>
+
+          {/* Divider */}
           <div
             style={{
               height: "1px",
-              background: "linear-gradient(90deg, #3d2000, transparent)",
+              background: "linear-gradient(90deg, var(--border), transparent)",
               marginBottom: "16px",
             }}
           />
+
+          {/* Empty state */}
           {emails.length === 0 && (
             <div
               style={{
                 textAlign: "center",
                 padding: "20px 0",
-                color: "#3d2000",
+                color: "var(--text-soft)",
                 fontSize: "0.82rem",
-                fontFamily: "Cinzel, serif",
+                fontFamily: "'Cinzel', serif",
               }}
             >
               No emails added yet
             </div>
           )}
+
+          {/* Email list */}
           {emails.map((email, i) => (
             <div
               key={i}
               style={{
-                background: "#110800",
+                background: "var(--off-white)",
                 borderRadius: "10px",
                 padding: "12px 16px",
                 marginBottom: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                border: "1px solid #2a1000",
+                border: "1px solid var(--border)",
                 gap: "12px",
               }}
             >
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
+                {/* Avatar circle */}
                 <div
                   style={{
                     width: "32px",
                     height: "32px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #d4570a, #a83800)",
+                    background:
+                      "linear-gradient(135deg, var(--saffron), #a83800)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -183,13 +192,15 @@ export default function AccessAdmin({ currentUserEmail }) {
                   {email[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ color: "#faf5e8", fontSize: "0.82rem" }}>
+                  <div
+                    style={{ color: "var(--text-dark)", fontSize: "0.82rem" }}
+                  >
                     {email}
                   </div>
                   {email === currentUserEmail && (
                     <div
                       style={{
-                        color: "#b8860b",
+                        color: "var(--saffron)",
                         fontSize: "0.65rem",
                         marginTop: "2px",
                         letterSpacing: "1px",
@@ -203,14 +214,14 @@ export default function AccessAdmin({ currentUserEmail }) {
               <button
                 onClick={() => removeEmail(email)}
                 style={{
-                  background: "rgba(184,134,11,0.1)",
-                  border: "1px solid rgba(184,134,11,0.2)",
-                  color: "#b8860b",
+                  background: "rgba(212,87,10,0.08)",
+                  border: "1px solid rgba(212,87,10,0.2)",
+                  color: "var(--saffron)",
                   borderRadius: "6px",
                   padding: "4px 12px",
                   fontSize: "0.68rem",
                   cursor: "pointer",
-                  fontFamily: "Cinzel, serif",
+                  fontFamily: "'Cinzel', serif",
                   flexShrink: 0,
                 }}
               >
@@ -218,28 +229,30 @@ export default function AccessAdmin({ currentUserEmail }) {
               </button>
             </div>
           ))}
-          {feedback && (
-            <div
-              className={feedback.ok ? "feedback-success" : "feedback-error"}
-              style={{ marginTop: "12px" }}
-            >
-              {feedback.msg}
-            </div>
-          )}
+
+          <Feedback feedback={feedback} />
         </div>
       </div>
+
+      {/* ── Info note ── */}
       <div
         style={{
           marginTop: "16px",
           padding: "14px 16px",
-          background: "#110800",
+          background: "var(--cream)",
           borderRadius: "10px",
-          border: "1px solid #2a1000",
+          border: "1px solid var(--border)",
         }}
       >
-        <div style={{ fontSize: "0.72rem", color: "#5a3a1a", lineHeight: 1.7 }}>
-          ⓘ Only Google accounts listed here can log in. Changes take effect
-          immediately.
+        <div
+          style={{
+            fontSize: "0.72rem",
+            color: "var(--text-soft)",
+            lineHeight: 1.7,
+          }}
+        >
+          ⓘ Only Google accounts listed here can log in to the admin panel.
+          Changes take effect immediately.
         </div>
       </div>
     </div>

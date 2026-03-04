@@ -59,7 +59,14 @@ function ShadaniLogo({ size = 48 }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const s = sessionStorage.getItem("admin_user");
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  });
   const [error, setError] = useState(null);
   const [section, setSection] = useState("home");
   const [tab, setTab] = useState(0);
@@ -83,12 +90,14 @@ export default function App() {
       setError("Could not verify access. Please try again.");
       return;
     }
+    sessionStorage.setItem("admin_user", JSON.stringify(decoded));
     setUser(decoded);
     setError(null);
   };
 
   const handleLogout = () => {
     googleLogout();
+    sessionStorage.removeItem("admin_user");
     setUser(null);
   };
   const switchSection = (id) => {
