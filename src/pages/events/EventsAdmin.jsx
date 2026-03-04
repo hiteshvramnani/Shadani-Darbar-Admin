@@ -112,7 +112,6 @@ export default function EventsAdmin() {
 
   const handleSave = () =>
     save({
-      ...config,
       featuredEvent: featured,
       upcomingEvents: upcoming,
       aartiCards: aarti,
@@ -227,7 +226,7 @@ export default function EventsAdmin() {
                   onChange={(e) =>
                     setFeatured((f) => ({ ...f, title: e.target.value }))
                   }
-                  placeholder="Event Title"
+                  placeholder="e.g. Cheti Chand Utsav 2026"
                 />
               </Field>
               <Field label="Time">

@@ -25,9 +25,7 @@ export default function AccessAdmin({ currentUserEmail }) {
     setSaving(true);
     setFeedback(null);
     try {
-      const newConfig = { ...config, allowedEmails: newEmails };
-      await saveConfig(newConfig);
-      setConfig(newConfig);
+      await saveConfig({ allowedEmails: newEmails });
       setEmails(newEmails);
       setFeedback({ ok: true, msg: "❖ Access list updated!" });
     } catch (e) {

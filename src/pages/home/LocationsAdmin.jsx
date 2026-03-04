@@ -61,7 +61,7 @@ export default function LocationsAdmin() {
     setSaving(true);
     setFeedback(null);
     try {
-      const newConfig = { ...config, locations: newLocations };
+      const newConfig = { locations: newLocations };
       await saveConfig(newConfig);
       setConfig(newConfig);
       setLocations(newLocations);

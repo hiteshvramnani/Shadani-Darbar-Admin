@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { saveConfig } from "../../lib/api";
+import { useState, useEffect } from "react";
+import { fetchConfig, saveConfig } from "../../lib/api";
 import { Card, CardHeader, CardBody } from "../../components/Card";
 import Feedback from "../../components/Feedback";
 
@@ -27,8 +27,18 @@ function Field({ label, value, onChange, rows }) {
 
 export default function AboutContentAdmin() {
   const [data,     setData]     = useState(DEFAULT);
+  const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  // Load saved content from KV on mount
+  useEffect(() => {
+    fetchConfig()
+      .then(cfg => {
+        if (cfg?.aboutContent) setData(cfg.aboutContent);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const set = (key, val) => setData(d => ({ ...d, [key]: val }));
 
@@ -43,6 +53,12 @@ export default function AboutContentAdmin() {
     setSaving(false);
     setTimeout(() => setFeedback(null), 4000);
   };
+
+  if (loading) return (
+    <div style={{ textAlign: "center", padding: "60px", color: "var(--text-soft)", fontFamily: "'Cinzel',serif", fontSize: "0.8rem" }}>
+      Loading...
+    </div>
+  );
 
   return (
     <div style={{ maxWidth: "720px" }}>

@@ -5,7 +5,6 @@ import Toggle from "../../components/Toggle";
 import Feedback from "../../components/Feedback";
 
 export default function NoticeAdmin() {
-  const [config, setConfig] = useState(null);
   const [text, setText] = useState("");
   const [show, setShow] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -18,7 +17,6 @@ export default function NoticeAdmin() {
         const notice = cfg?.notice || {};
         setText(notice.text || "");
         setShow(notice.show !== false);
-        setConfig(cfg);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -28,8 +26,7 @@ export default function NoticeAdmin() {
     setSaving(true);
     setFeedback(null);
     try {
-      const newConfig = { ...config, notice: { show, text } };
-      await saveConfig({ ...config, notice: { show, text } });
+      await saveConfig({ notice: { show, text } });
 
       setFeedback({ ok: true, msg: "✦ Notice updated successfully!" });
     } catch (e) {
@@ -123,7 +120,7 @@ export default function NoticeAdmin() {
             disabled={!show}
             maxLength={300}
             rows={3}
-            placeholder="e.g. 🙏 Welcome to Shadani Darbar, Raipur"
+            placeholder="e.g. 🙏 Welcome to Shadani Darbar, Raipur | ✨ | Cheti Chand Utsav on 30 March 2026"
           />
         </div>
       </div>
