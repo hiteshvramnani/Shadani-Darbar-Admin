@@ -11,6 +11,7 @@ const BLANK_LOCATION = {
   address: "",
   mapsLink: "",
   emoji: "🛕",
+  estYear: "",
   images: [],
 };
 const EMOJI_OPTIONS = ["🛕", "🕉️", "🪔", "🏛️", "🕌", "🙏", "⛪", "🗺️", "✨"];
@@ -87,6 +88,14 @@ export default function LocationsAdmin() {
     save(locations.filter((_, idx) => idx !== i));
   };
 
+  const moveLocation = (index, dir) => {
+    const next = [...locations];
+    const swap = index + dir;
+    if (swap < 0 || swap >= next.length) return;
+    [next[index], next[swap]] = [next[swap], next[index]];
+    save(next);
+  };
+
   if (loading)
     return (
       <div
@@ -140,20 +149,32 @@ export default function LocationsAdmin() {
             </div>
           )}
           {locations.map((loc, i) => (
-            <div
-              key={loc.id || i}
-              style={{
-                background: "var(--off-white)",
-                borderRadius: "10px",
-                padding: "14px 16px",
-                marginBottom: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                border: "1px solid var(--border)",
-                gap: "12px",
-              }}
-            >
+            <div key={loc.id || i} style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "10px" }}>
+              {/* Reorder arrows */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px", flexShrink: 0 }}>
+                {[{ a: "▲", d: i === 0, dir: -1 }, { a: "▼", d: i === locations.length - 1, dir: 1 }].map(({ a, d, dir }) => (
+                  <button key={a} onClick={() => moveLocation(i, dir)} disabled={d} style={{
+                    width: "24px", height: "24px", border: "1px solid var(--border)",
+                    borderRadius: "4px", background: d ? "var(--cream)" : "white",
+                    color: d ? "var(--cream-dark)" : "var(--text-soft)",
+                    cursor: d ? "default" : "pointer", fontSize: "0.65rem",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>{a}</button>
+                ))}
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  background: "var(--off-white)",
+                  borderRadius: "10px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: "1px solid var(--border)",
+                  gap: "12px",
+                }}
+              >
               {/* Image preview strip */}
               <div
                 style={{
@@ -271,6 +292,7 @@ export default function LocationsAdmin() {
                 </button>
               </div>
             </div>
+          </div>
           ))}
           <button
             onClick={() => setEditing("new")}
@@ -480,6 +502,14 @@ function LocationModal({ initial, emojiOptions, onSave, onCancel }) {
             />
           </Field>
         </div>
+        <Field label="Year of Establishment">
+          <input
+            value={loc.estYear || ""}
+            onChange={(e) => set("estYear", e.target.value.replace(/\D/g, "").slice(0, 4))}
+            placeholder="e.g. 1952"
+            maxLength={4}
+          />
+        </Field>
         <Field label="Full Address">
           <textarea
             rows={2}
