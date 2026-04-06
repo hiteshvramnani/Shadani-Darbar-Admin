@@ -296,9 +296,9 @@ export default function EventsAdmin() {
                     />
                   </Field>
                 </div>
-                <Field label="Date (countdown)">
+                <Field label="Date & Time (countdown)">
                   <input
-                    type="date"
+                    type="datetime-local"
                     value={featured.date}
                     onChange={(e) =>
                       setFeatured((f) => ({ ...f, date: e.target.value }))
