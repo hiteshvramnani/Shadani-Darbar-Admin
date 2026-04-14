@@ -15,6 +15,7 @@ import AboutImageAdmin from "./pages/about/AboutImageAdmin";
 import AboutContentAdmin from "./pages/about/AboutContentAdmin";
 import AccessAdmin from "./pages/access/AccessAdmin";
 import BhajanAdmin from "./pages/bhajan/BhajanAdmin";
+import SevaSangatAdmin from "./pages/sevaSangat/SevaSangatAdmin";
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -38,6 +39,13 @@ const NAV = [
     icon: "🎶",
     label: "Bhajan Corner",
     subtitle: "Manage bhajans & kirtans",
+    tabs: [],
+  },
+  {
+    id: "sevaSangat",
+    icon: "🙏",
+    label: "Seva Sangat",
+    subtitle: "Manage seva sangat member volunteers",
     tabs: [],
   },
   {
@@ -568,6 +576,7 @@ export default function App() {
                 {section === "home" && tab === 2 && <LocationsAdmin />}
                 {section === "events" && <EventsAdmin />}
                 {section === "bhajan" && <BhajanAdmin />}
+                {section === "sevaSangat" && <SevaSangatAdmin />}
                 {section === "about" && tab === 0 && <AboutImageAdmin />}
                 {section === "about" && tab === 1 && <AboutContentAdmin />}
                 {section === "access" && (
