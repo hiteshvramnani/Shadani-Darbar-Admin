@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { uploadToSupabase } from "../lib/supabase";
+import { compressImage } from "../lib/imageCompress";
 import Feedback from "./Feedback";
 
 export default function ImageUpload({
@@ -23,7 +24,11 @@ export default function ImageUpload({
     setUploading(true);
     setFeedback(null);
     try {
-      const url = await uploadToSupabase(file, folder);
+      const compressed = await compressImage(file, {
+        maxDimension: 1600,
+        quality: 0.8,
+      });
+      const url = await uploadToSupabase(compressed, folder);
       setPreview(url);
       setFeedback({ ok: true, msg: "✦ Image uploaded!" });
       onUploaded?.(url);
